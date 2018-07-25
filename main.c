@@ -81,7 +81,9 @@ int main(int argc, char *argv[]){
         dda_draw_line(x, y, p, q);
     else
         bresenham_draw_line(x, y, p, q);
-    getch();
+    noecho();
+    char c;
+    while((c = getch()) != 'q' && c != 'Q');
     terminate_driver();
     arg_free(list);
     return 0;
