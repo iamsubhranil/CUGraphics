@@ -83,9 +83,9 @@ static void draw_line(ArgumentList list, char **argv){
 
     int algo = 0, x = 0, y = 0, p = 0, q = 0;
     
-    const char *algos[] = {"dda", "bresenham"};
+    const char *algos[] = {"dda", "bresenham", "midpoint"};
 
-    algo = expect_oneof('a', list, "Specify the algorithm to use", argv[0], 2, &algos[0]);
+    algo = expect_oneof('a', list, "Specify the algorithm to use", argv[0], 3, &algos[0]);
 
     get_int('x', &x, "starting x", list, argv[0]);
     get_int('y', &y, "starting y", list, argv[0]);
@@ -95,10 +95,18 @@ static void draw_line(ArgumentList list, char **argv){
     init_driver();
     if(arg_is_present(list, 'g'))
         draw_graph();
-    if(algo == 1)
-        dda_draw_line(x, y, p, q);
-    else
-        bresenham_draw_line(x, y, p, q);
+    
+    switch(algo){
+        case 1:
+            dda_draw_line(x, y, p, q);
+            break;
+        case 2:
+            bresenham_draw_line(x, y, p, q);
+            break;
+        case 3:
+            midpoint_draw_line(x, y, p, q);
+            break;
+    }
 }
 
 static void draw_circle(ArgumentList list, char **argv){
