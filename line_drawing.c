@@ -6,7 +6,7 @@
 #define ABS(x)      ((x) < 0 ? -(x) : (x))
 #define ROUND(x)    (int)((x) + 0.5)
 
-void dda_draw_line(int x1, int y1, int x2, int y2){
+void draw_line_dda(int x1, int y1, int x2, int y2){
     int dx = x2 - x1;
     int dy = y2 - y1;
 
@@ -38,7 +38,7 @@ void dda_draw_line(int x1, int y1, int x2, int y2){
     }
 }
 
-void bresenham_draw_line(int x1, int y1, int x2, int y2){
+void draw_line_bresenham(int x1, int y1, int x2, int y2){
     int dy = ABS(y1 - y2);
     int dx = ABS(x1 - x2);
     int x = x1;
@@ -67,7 +67,7 @@ void bresenham_draw_line(int x1, int y1, int x2, int y2){
     }
 }
 
-void midpoint_draw_line(int x1, int y1, int x2, int y2){
+void draw_line_midpoint(int x1, int y1, int x2, int y2){
     int dy = ABS(y2 - y1);
     int dx = ABS(x2 - x1);
     int a = dy;

@@ -23,7 +23,7 @@ static void circle_8_points(int a, int b, int xd, int yd){
     put_pixel(a + y, b - x);
 }
 
-void bresenham_draw_circle(int a, int b, int r){
+void draw_circle_bresenham(int a, int b, int r){
     int x = a;
     int y = b + r;
     circle_8_points(a, b, x, y);
@@ -77,7 +77,7 @@ static void circle_n_points(int a, int b, int x, int y, int points){
     }
 }
 
-void bresenham_draw_circle_n_point(int a, int b, int r, int points){
+void draw_circle_bresenham_n_point(int a, int b, int r, int points){
     double x = a;
     double y = b + r;
 

@@ -98,13 +98,13 @@ static void draw_line(ArgumentList list, char **argv){
     
     switch(algo){
         case 1:
-            dda_draw_line(x, y, p, q);
+            draw_line_dda(x, y, p, q);
             break;
         case 2:
-            bresenham_draw_line(x, y, p, q);
+            draw_line_bresenham(x, y, p, q);
             break;
         case 3:
-            midpoint_draw_line(x, y, p, q);
+            draw_line_midpoint(x, y, p, q);
             break;
     }
 }
@@ -135,10 +135,10 @@ static void draw_circle(ArgumentList list, char **argv){
     init_driver();
     if(algo == 1){
         if(s > 0){
-            bresenham_draw_circle_n_point(x, y, r, s);
+            draw_circle_bresenham_n_point(x, y, r, s);
         }
         else
-            bresenham_draw_circle(x, y, r);
+            draw_circle_bresenham(x, y, r);
     }
 }
 
