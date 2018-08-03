@@ -1,4 +1,5 @@
 #include <ncurses.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include "cargparser.h"
@@ -26,7 +27,29 @@ static void usage(const char *name){
             "\t[-s|--symmetry]  : point symmetry of the circle      <int> [optional, if not specified, uses 8 by default]\n", name);
 }
 
-static void get_int(char s, int *slot, const char *name, ArgumentList list, char *argv0){
+static int expect_oneof(char s, ArgumentList list, const char *err, const char *argv0, int count, const char **args){
+    if(arg_is_present(list, s)){
+        char *val = arg_value(list, s);
+        for(int i = 0;i < count;i++){
+            if(strcmp(args[i], val) == 0)
+                return i + 1;
+        }
+        perr("Wrong value for argument -%c", s);
+        perr("Expected one of : %s", args[0]);
+        for(int i = 1;i < count;i++)
+            printf(", %s", args[i]);
+        printf("\n");
+        exit(1);
+    }
+    else{
+        perr("%s!", err);
+        arg_free(list);
+        usage(argv0);
+        exit(1);
+    }
+}
+
+static void get_int_impl(char s, int *slot, const char *name, ArgumentList list, char *argv0, bool isoptional, int defaultValue){
     if(arg_is_present(list, s)){
         char *end = NULL, *str = arg_value(list, s);
         *slot = strtol(str, &end, 10);
@@ -37,6 +60,9 @@ static void get_int(char s, int *slot, const char *name, ArgumentList list, char
             exit(1);
         }
     }
+    else if(isoptional){
+        *slot = defaultValue;
+    }
     else{
         perr("Expected argument %s", name);
         arg_free(list);
@@ -45,29 +71,21 @@ static void get_int(char s, int *slot, const char *name, ArgumentList list, char
     }
 }
 
+static void get_int(char s, int *slot, const char *name, ArgumentList list, char *argv0){
+    return get_int_impl(s, slot, name, list, argv0, false, 0);
+}
+
+static void get_int_optional(char s, int *slot, const char *name, ArgumentList list, char *argv0, int defaultValue){
+    return get_int_impl(s, slot, name, list, argv0, true, defaultValue);
+}
+
 static void draw_line(ArgumentList list, char **argv){
 
     int algo = 0, x = 0, y = 0, p = 0, q = 0;
     
-    if(arg_is_present(list, 'a')){
-        char *al = arg_value(list, 'a');
-        if(strcmp(al, "dda") == 0)
-            algo = 1;
-        else if(strcmp(al, "bresenham") == 0)
-            algo = 2;
-        else{
-            perr("--algo must be one of 'dda' or 'bresenham'!");
-            arg_free(list);
-            usage(argv[0]);
-            exit(1);
-        }
-    }
-    else{
-        perr("No algorithm specified!");
-        arg_free(list);
-        usage(argv[0]);
-        exit(1);
-    }
+    const char *algos[] = {"dda", "bresenham"};
+
+    algo = expect_oneof('a', list, "Specify the algorithm to use", argv[0], 2, &algos[0]);
 
     get_int('x', &x, "starting x", list, argv[0]);
     get_int('y', &y, "starting y", list, argv[0]);
@@ -85,30 +103,17 @@ static void draw_line(ArgumentList list, char **argv){
 
 static void draw_circle(ArgumentList list, char **argv){
     int algo = 0, x = 0, y = 0, r = 0, s = 0;
+    
+    const char *algos[] = {"bresenham"};
 
-    if(arg_is_present(list, 'a')){
-        char *al = arg_value(list, 'a');
-        if(strcmp(al, "bresenham") == 0)
-            algo = 1;
-        else{
-            perr("--algo must be one of 'bresenham' or 'midpoint'!");
-            arg_free(list);
-            exit(1);
-        }
-    }
-    else{
-        perr("No algorithm specified!");
-        arg_free(list);
-        usage(argv[0]);
-        exit(1);
-    }
+    algo = expect_oneof('a', list, "Specify the algorithm to use", argv[0], 1, &algos[0]);
 
     get_int('x', &x, "centre x", list, argv[0]);
     get_int('y', &y, "centre y", list, argv[0]);
     get_int('r', &r, "radius", list, argv[0]);
-
-    if(arg_is_present(list, 's')){
-        get_int('s', &s, "symmetry", list, argv[0]);
+    get_int_optional('s', &s, "symmetry", list, argv[0], 0);
+    
+    if(s != 0){
         int j = 2;
         while((j << 1) <= s)
             j <<= 1;
@@ -148,26 +153,15 @@ int main(int argc, char *argv[]){
     arg_add(list, 's', "symmetry", true);
 
     arg_parse(argc, &argv[0], list);
+   
+    const char *objects[] = {"line", "circle"};
+
+    int choice = expect_oneof('o', list, "Specify object to draw", argv[0], 2, &objects[0]);
     
-    if(arg_is_present(list, 'o')){
-        char *obj = arg_value(list, 'o');
-        if(strcmp(obj, "line") == 0)
-            draw_line(list, argv);
-        else if(strcmp(obj, "circle") == 0)
-            draw_circle(list, argv);
-        else{
-            perr("--object must be one of 'circle' or 'line'!");
-            arg_free(list);
-            usage(argv[0]);
-            return 1;
-        }
-    }
-    else{
-        perr("Specify object to draw!");
-        usage(argv[0]);
-        arg_free(list);
-        return 1;
-    }
+    if(choice == 1)
+        draw_line(list, &argv[0]);
+    else
+        draw_circle(list, &argv[0]);
 
     noecho();
     char c;
