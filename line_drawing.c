@@ -66,3 +66,28 @@ void bresenham_draw_line(int x1, int y1, int x2, int y2){
         put_pixel(x, y);
     }
 }
+
+void midpoint_draw_line(int x1, int y1, int x2, int y2){
+    int dy = ABS(y2 - y1);
+    int dx = ABS(x2 - x1);
+    int a = dy;
+    int b = -dx;
+    double x = x1;
+    double y = y1;
+
+    put_pixel(x, y);
+    double p = a + (double)(b/2);
+    
+    while(x < x2){
+        if(p < 0){
+            p = p + a + b;
+            y += 1.5;
+        }
+        else{
+            p = p + a;
+            y += 0.5;
+        }
+        x++;
+        put_pixel(x, y);
+    }
+}
