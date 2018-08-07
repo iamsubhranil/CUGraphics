@@ -13,8 +13,8 @@ static void circle_8_points(int a, int b, int xd, int yd){
     put_pixel(a - x, b - y);
     put_pixel(a + x, b - y);
 
-    y = yd - a;
-    x = xd - b;
+    //y = yd - a;
+    //x = xd - b;
 
     //pdbg("(%d, %d)\t(%d, %d)\t(%d, %d)\t(%d, %d)\n", y, x, -y, x, -y, -x, y, -x);
     put_pixel(a + y, b + x);
@@ -28,14 +28,14 @@ void draw_circle_bresenham(int a, int b, int r){
     int y = b + r;
     circle_8_points(a, b, x, y);
     int p = 3 - 2*r;
-    while(y > x){
+    while((y - b) > (x - a)){
+        x++;
         if(p < 0)
             p = p + 4*x + 6;
         else{
-            p = p + 4*(x - y) + 10;
             y--;
+            p = p + 4*(x - y) + 10;
         }
-        x++;
         circle_8_points(a, b, x, y);
     }
 }
@@ -89,13 +89,13 @@ void draw_circle_bresenham_n_point(int a, int b, int r, int points){
     double expectedSlope = tan(theta);
 
     do{
+        x++;
         if(p < 0)
             p = p + 4*x + 6;
         else{
-            p = p + 4*(x - y) + 10;
             y--;
+            p = p + 4*(x - y) + 10;
         }
-        x++;
         circle_n_points(a, b, x, y, points);
     } while((y - b)/(x - a) > expectedSlope);
 }
