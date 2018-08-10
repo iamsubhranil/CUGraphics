@@ -112,9 +112,9 @@ static void draw_line(ArgumentList list, char **argv){
 static void draw_circle(ArgumentList list, char **argv){
     int algo = 0, x = 0, y = 0, r = 0, s = 0;
     
-    const char *algos[] = {"bresenham"};
+    const char *algos[] = {"bresenham", "midpoint"};
 
-    algo = expect_oneof('a', list, "Specify the algorithm to use", argv[0], 1, &algos[0]);
+    algo = expect_oneof('a', list, "Specify the algorithm to use", argv[0], 2, &algos[0]);
 
     get_int('x', &x, "centre x", list, argv[0]);
     get_int('y', &y, "centre y", list, argv[0]);
@@ -133,12 +133,17 @@ static void draw_circle(ArgumentList list, char **argv){
     }
 
     init_driver();
-    if(algo == 1){
-        if(s > 0){
-            draw_circle_bresenham_n_point(x, y, r, s);
-        }
-        else
-            draw_circle_bresenham(x, y, r);
+    switch(algo){
+        case 1:
+            if(s > 0){
+                draw_circle_bresenham_n_point(x, y, r, s);
+            }
+            else
+                draw_circle_bresenham(x, y, r);
+            break;
+        case 2:
+            draw_circle_midpoint(x, y, r, s == 0 ? 4 : s);
+            break;
     }
 }
 
