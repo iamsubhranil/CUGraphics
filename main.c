@@ -100,6 +100,7 @@ static void draw_line(ArgumentList list, char **argv){
     get_int('q', &q, "ending y", list, argv[0]);
 
     init_driver();
+    set_pivot((x + p) / 2, (y + q) / 2);
     if(arg_is_present(list, 'g'))
         draw_graph();
     
@@ -140,6 +141,7 @@ static void draw_circle(ArgumentList list, char **argv){
     }
 
     init_driver();
+    set_pivot(x, y);
     switch(algo){
         case 1:
             if(s > 0){
@@ -162,6 +164,7 @@ static void draw_ellipse(ArgumentList list, char **argv){
     get_int('n', &b, "minor axis length", list, argv[0]);
     
     init_driver();
+    set_pivot(x, y);
     draw_ellipse_midpoint(x, y, a, b);
 }
 
@@ -202,10 +205,7 @@ int main(int argc, char *argv[]){
             draw_ellipse(list, &argv[0]);
             break;
     }
-
-    noecho();
-    char c;
-    while((c = getch()) != 'q' && c != 'Q');
+    transform();
     terminate_driver();
     arg_free(list);
     return 0;
