@@ -28,6 +28,7 @@ void draw_graph(){
 
 void put_pixel(int x, int y){
     mvaddstr(LINES - y - 1, x*2 + 1, pixel_fill);
+    refresh();
 }
 
 void terminate_driver(){
