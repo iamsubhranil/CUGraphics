@@ -1,5 +1,6 @@
 #include <math.h>
 
+#include "circle_drawing.h"
 #include "display.h"
 #include "driver.h"
 
@@ -98,4 +99,29 @@ void draw_circle_bresenham_n_point(int a, int b, int r, int points){
         }
         circle_n_points(a, b, x, y, points);
     } while((y - b)/(x - a) > expectedSlope);
+}
+
+void draw_circle_midpoint(int a, int b, int r, int points){
+    int x = a;
+    int y = b + r;
+    
+    circle_n_points(a, b, x, y, points);
+    
+    int p = 1 - r;
+
+    double theta = (90 - (360/points)) * (M_PI/180);
+    double expectedSlope = tan(theta);
+    
+    do{
+        x++;
+        if(p < 0){
+            p = p + 2*x + 3;
+        }
+        else{
+            y--;
+            p = p + 2*(x - y) + 5;
+        }
+        circle_n_points(a, b, x, y, points);
+
+    } while((double)(y - b)/(x - a) > expectedSlope);
 }

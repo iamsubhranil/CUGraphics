@@ -6,6 +6,7 @@
 #include "circle_drawing.h"
 #include "display.h"
 #include "driver.h"
+#include "ellipse_drawing.h"
 #include "line_drawing.h"
 
 static void usage(const char *name){
@@ -24,7 +25,13 @@ static void usage(const char *name){
             "\t[-x|--startx]    : x coordinate of the centre        <int>\n"
             "\t[-y|--starty]    : y coordinate of the centre        <int>\n"
             "\t[-r|--radius]    : radius of the circle              <int>\n"
-            "\t[-s|--symmetry]  : point symmetry of the circle      <int> [optional, if not specified, uses 8 by default]\n", name);
+            "\t[-s|--symmetry]  : point symmetry of the circle      <int> [optional, if not specified, uses 8 by default]\n\n"
+            "Arguments for ellipse drawing : \n"
+            "\t[-o|--object]    : ellipse\n"
+            "\t[-x|--startx]    : x coordinate of the centre        <int>\n"
+            "\t[-y|--starty]    : y coordinate of the centre        <int>\n"
+            "\t[-m|--major]     : length of the major axis          <int>\n"
+            "\t[-n|--minor]     : length of the minor axis          <int>\n", name);
 }
 
 static int expect_oneof(char s, ArgumentList list, const char *err, const char *argv0, int count, const char **args){
@@ -93,6 +100,7 @@ static void draw_line(ArgumentList list, char **argv){
     get_int('q', &q, "ending y", list, argv[0]);
 
     init_driver();
+    set_pivot((x + p) / 2, (y + q) / 2);
     if(arg_is_present(list, 'g'))
         draw_graph();
     
@@ -112,9 +120,9 @@ static void draw_line(ArgumentList list, char **argv){
 static void draw_circle(ArgumentList list, char **argv){
     int algo = 0, x = 0, y = 0, r = 0, s = 0;
     
-    const char *algos[] = {"bresenham"};
+    const char *algos[] = {"bresenham", "midpoint"};
 
-    algo = expect_oneof('a', list, "Specify the algorithm to use", argv[0], 1, &algos[0]);
+    algo = expect_oneof('a', list, "Specify the algorithm to use", argv[0], 2, &algos[0]);
 
     get_int('x', &x, "centre x", list, argv[0]);
     get_int('y', &y, "centre y", list, argv[0]);
@@ -133,13 +141,31 @@ static void draw_circle(ArgumentList list, char **argv){
     }
 
     init_driver();
-    if(algo == 1){
-        if(s > 0){
-            draw_circle_bresenham_n_point(x, y, r, s);
-        }
-        else
-            draw_circle_bresenham(x, y, r);
+    set_pivot(x, y);
+    switch(algo){
+        case 1:
+            if(s > 0){
+                draw_circle_bresenham_n_point(x, y, r, s);
+            }
+            else
+                draw_circle_bresenham(x, y, r);
+            break;
+        case 2:
+            draw_circle_midpoint(x, y, r, s == 0 ? 4 : s);
+            break;
     }
+}
+
+static void draw_ellipse(ArgumentList list, char **argv){
+    int x = 0, y = 0, a = 0, b = 0; 
+    get_int('x', &x, "centre x", list, argv[0]);
+    get_int('y', &y, "centre y", list, argv[0]);
+    get_int('m', &a, "major axis length", list, argv[0]);
+    get_int('n', &b, "minor axis length", list, argv[0]);
+    
+    init_driver();
+    set_pivot(x, y);
+    draw_ellipse_midpoint(x, y, a, b);
 }
 
 int main(int argc, char *argv[]){
@@ -148,7 +174,7 @@ int main(int argc, char *argv[]){
         return 0;
     }
 
-    ArgumentList list = arg_list_create(9);
+    ArgumentList list = arg_list_create(11);
    
     arg_add(list, 'o', "object", true);
     arg_add(list, 'a', "algo", true);
@@ -159,21 +185,27 @@ int main(int argc, char *argv[]){
     arg_add(list, 'q', "endy", true);
     arg_add(list, 'g', "showgraph", false);
     arg_add(list, 's', "symmetry", true);
+    arg_add(list, 'm', "major", true);
+    arg_add(list, 'n', "minor", true);
 
     arg_parse(argc, &argv[0], list);
    
-    const char *objects[] = {"line", "circle"};
+    const char *objects[] = {"line", "circle", "ellipse"};
 
-    int choice = expect_oneof('o', list, "Specify object to draw", argv[0], 2, &objects[0]);
+    int choice = expect_oneof('o', list, "Specify object to draw", argv[0], 3, &objects[0]);
     
-    if(choice == 1)
-        draw_line(list, &argv[0]);
-    else
-        draw_circle(list, &argv[0]);
-
-    noecho();
-    char c;
-    while((c = getch()) != 'q' && c != 'Q');
+    switch(choice){
+        case 1:
+            draw_line(list, &argv[0]);
+            break;
+        case 2:
+            draw_circle(list, &argv[0]);
+            break;
+        case 3:
+            draw_ellipse(list, &argv[0]);
+            break;
+    }
+    transform();
     terminate_driver();
     arg_free(list);
     return 0;
