@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "display.h"
+#include "driver.h"
 #include "matrix.h"
 
 #ifndef NO_DRAW
@@ -16,6 +17,7 @@ static const char *pixel_fill = "\u25a0";
 #endif
 static int pivot_x = -1, pivot_y = -1;
 static u8 **pixels = NULL;
+static int do_transform = 1;
 
 #define mod_y(y)    (LINES - y - 1)
 #define orig_y(y)   (LINES - y - 1)
@@ -43,6 +45,10 @@ void init_driver(){
 #endif
 }
 
+void enable_transform(int t){
+    do_transform = t;
+}
+
 void draw_graph(){
 #ifndef NO_DRAW
     for(int i = 0;i < LINES - 1;i++){
@@ -59,15 +65,23 @@ void draw_graph(){
 #endif
 }
 
-void put_pixel(int x, int y){
+void set_pixel(int x, int y, const char *fill){
     if(mod_x(x) > COLS - 1 || mod_y(y) < 0 || pixels[mod_y(y)][mod_x(x)])
         return;
     pixels[mod_y(y)][mod_x(x)] = 1;
 #ifndef NO_DRAW
-    mvaddstr(mod_y(y), mod_x(x), pixel_fill);
+    mvaddstr(mod_y(y), mod_x(x), fill);
     refresh();
 #else
     pdbg("Pixel drawn : (%d, %d) as (%d, %d)", x, y, mod_x(x), mod_y(y));
+#endif
+}
+
+void put_pixel(int x, int y){
+#ifndef NO_DRAW
+    set_pixel(x, y, pixel_fill);
+#else
+    set_pixel(x, y, "");
 #endif
 }
 
@@ -88,6 +102,19 @@ static void redraw(){
     refresh();
 #else
     pdbg("Screen redrawn");
+#endif
+}
+
+void screen_clear(){
+#ifndef NO_DRAW
+    clear();
+    for(int i = 0;i < LINES;i++){
+        for(int j = 0;j < COLS;j++)
+            pixels[i][j] = 0;
+    }
+    refresh();
+#else
+    pdbg("Screen cleared");
 #endif
 }
 
@@ -193,7 +220,7 @@ static void make_mat_rot(Matrix mat, double deg){
 }
 #endif
 
-static void show_msg(const char *msg){
+void show_msg(const char *msg){
 #ifndef NO_DRAW
     mvaddstr(0, 0, msg);
 #else
@@ -201,7 +228,11 @@ static void show_msg(const char *msg){
 #endif
 }
 
-void transform(){
+static u8 keypad_init_done = 0;
+
+static void keypad_init(){
+    if(keypad_init_done)
+        return;
 #ifndef NO_DRAW
     keypad(stdscr, TRUE);
     noecho();
@@ -212,6 +243,34 @@ void transform(){
     tcsetattr(0, TCSANOW, &t);
     pdbg("Intialized keypad and set noecho");
 #endif
+    keypad_init_done = 1;
+}
+
+static void keypad_restore(){
+#ifdef NO_DRAW
+    struct termios t;
+    tcgetattr(0, &t);
+    t.c_lflag &= ECHO | ICANON;
+    tcsetattr(0, TCSANOW, &t);
+    pdbg("Keypad state restored!");
+#else
+    keypad(stdscr, FALSE);
+    echo();
+#endif
+    keypad_init_done = 0;
+}
+
+int wait_for_input(){
+    keypad_init();
+#ifdef NO_DRAW
+    return getchar();
+#else
+    return getch();
+#endif
+}
+
+void transform(){
+    keypad_init();
 #ifndef NO_DRAW
 #define KB_UP       KEY_UP
 #define KB_DOWN     KEY_DOWN
@@ -230,6 +289,12 @@ void transform(){
     int c;
     Matrix tm = mat_new(3, 3);
     while((c = getch()) != 'q' && c != 'Q'){
+        if(!do_transform){
+#ifdef NO_DRAW
+            pdbg("Transformation disabled!");
+#endif
+            continue;
+        }
         //echo();
 #ifdef NO_DRAW
         pdbg("KeyPressed : %d", c);
@@ -304,10 +369,7 @@ void transform(){
 #endif
         }
     }
-#ifdef NO_DRAW
-    t.c_lflag &= ECHO | ICANON;
-    tcsetattr(0, TCSANOW, &t);
-#endif
+    keypad_restore();
     mat_free(tm);
 }
 
@@ -318,6 +380,6 @@ void terminate_driver(){
 #ifndef NO_DRAW
     endwin();
 #else
-    pdbg("Window terminated");
+    pdbg("Window terminated!\n");
 #endif
 }

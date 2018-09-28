@@ -4,6 +4,7 @@
 
 #include "cargparser.h"
 #include "circle_drawing.h"
+#include "clipping.h"
 #include "display.h"
 #include "driver.h"
 #include "ellipse_drawing.h"
@@ -11,7 +12,7 @@
 
 static void usage(const char *name){
     printf("\n");
-    pinfo("Usage : %s <args>\n"
+    pinfo("Usage : %s <args>\n\n"
             "Arguments for line drawing : \n"
             "\t[-o|--object]    : line\n"
             "\t[-a|--algo]      : [dda|bresenham|midpoint]\n"
@@ -28,6 +29,12 @@ static void usage(const char *name){
             "\t[-x|--start]     : Coordinates of the centre         <int,int>\n"
             "\t[-m|--major]     : Length of the major axis          <int>\n"
             "\t[-n|--minor]     : Length of the minor axis          <int>\n\n"
+            "Arguments for line clipping : \n"
+            "\t[-o|--object]    : clip\n"
+            "\t[-x|--start]     : First endpoint of the line        <int,int>\n"
+            "\t[-y|--end]       : Second endpoint of the line       <int,int>\n"
+            "\t[-b|--bottom]    : Bottom left point of the window   <int,int>\n"
+            "\t[-t|--top]       : Top right point of the window     <int,int>\n\n"
             "To specify a coordinate, write it in the following format : \n"
             "\t<abscissa>,<ordinate>\n"
             "Don't add any spaces in between the comma and the numbers.\n", name);
@@ -75,7 +82,7 @@ static void get_int_impl(char s, int *slot, const char *name, ArgumentList list,
         *slot = defaultValue;
     }
     else{
-        perr("Expected argument %s!", name);
+        perr("Expected argument '-%c' (%s)!", s, name);
         arg_free(list);
         usage(argv0);
         exit(1);
@@ -109,7 +116,7 @@ static void get_point(char p, const char *name, int *slotx, int *sloty, Argument
         *sloty = parse_int(&str[i + 1], list, argv0);
     }
     else{
-        perr("Expected argument coordinates of %s!", name);
+        perr("Expected argument '-%c' (coordinates of %s)!", p, name);
 endpoint:
         arg_free(list);
         usage(argv0);
@@ -195,29 +202,44 @@ static void draw_ellipse(ArgumentList list, char **argv){
     draw_ellipse_midpoint(x, y, a, b);
 }
 
+static void draw_clip(ArgumentList list, char **argv){
+    int x = 0, y = 0, p = 0, q = 0, // coordinates of the line
+        bx = 0, by = 0, tx = 0, ty = 0; // coordinates of the diagonal of the clip window
+    get_point('x', "starting point of the line", &x, &y, list, argv[0]);
+    get_point('y', "ending point of the line", &p, &q, list, argv[0]);
+    get_point('b', "bottom left corner of the clip window", &bx, &by, list, argv[0]);
+    get_point('t', "top right corner of the clip window", &tx, &ty, list, argv[0]);
+    
+    enable_transform(0);
+    init_driver();
+    clipping_cohen_sutherland(x, y, p, q, bx, by, tx, ty);
+}
+
 int main(int argc, char *argv[]){
     if(argc < 2){
         usage(argv[0]);
         return 0;
     }
 
-    ArgumentList list = arg_list_create(9);
+    ArgumentList list = arg_list_create(11);
    
     arg_add(list, 'a', "algo", true);
+    arg_add(list, 'b', "bottom", true);
     arg_add(list, 'g', "showgraph", false);
     arg_add(list, 'm', "major", true);
     arg_add(list, 'n', "minor", true);
     arg_add(list, 'o', "object", true);
     arg_add(list, 'r', "radius", true);
     arg_add(list, 's', "symmetry", true);
+    arg_add(list, 't', "top", true);
     arg_add(list, 'x', "start", true);
     arg_add(list, 'y', "end", true);
 
     arg_parse(argc, &argv[0], list);
    
-    const char *objects[] = {"line", "circle", "ellipse"};
+    const char *objects[] = {"line", "circle", "ellipse", "clip"};
 
-    int choice = expect_oneof('o', list, "Specify object to draw", argv[0], 3, &objects[0]);
+    int choice = expect_oneof('o', list, "Specify object to draw", argv[0], 4, &objects[0]);
     
     switch(choice){
         case 1:
@@ -228,6 +250,9 @@ int main(int argc, char *argv[]){
             break;
         case 3:
             draw_ellipse(list, &argv[0]);
+            break;
+        case 4:
+            draw_clip(list, &argv[0]);
             break;
     }
     transform();
