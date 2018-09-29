@@ -31,6 +31,7 @@ static void usage(const char *name){
             "\t[-n|--minor]     : Length of the minor axis          <int>\n\n"
             "Arguments for line clipping : \n"
             "\t[-o|--object]    : clip\n"
+            "\t[-a|--algo]      : [cohen|midpoint]\n"
             "\t[-x|--start]     : First endpoint of the line        <int,int>\n"
             "\t[-y|--end]       : Second endpoint of the line       <int,int>\n"
             "\t[-b|--bottom]    : Bottom left point of the window   <int,int>\n"
@@ -47,7 +48,7 @@ static int expect_oneof(char s, ArgumentList list, const char *err, const char *
             if(strcmp(args[i], val) == 0)
                 return i + 1;
         }
-        perr("Wrong value for argument -%c!", s);
+        perr("Wrong value for argument '-%c'!", s);
         perr("Expected one of : %s", args[0]);
         for(int i = 1;i < count;i++)
             printf(", %s", args[i]);
@@ -209,10 +210,21 @@ static void draw_clip(ArgumentList list, char **argv){
     get_point('y', "ending point of the line", &p, &q, list, argv[0]);
     get_point('b', "bottom left corner of the clip window", &bx, &by, list, argv[0]);
     get_point('t', "top right corner of the clip window", &tx, &ty, list, argv[0]);
-    
+
+    const char *algos[] = {"cohen", "midpoint"};
+
+    int choice = expect_oneof('a', list, "Specify the algorithm to use", argv[0], 2, &algos[0]);
+
     enable_transform(0);
     init_driver();
-    clipping_cohen_sutherland(x, y, p, q, bx, by, tx, ty);
+    switch(choice){
+        case 1:
+            clipping_cohen_sutherland(x, y, p, q, bx, by, tx, ty);
+            break;
+        case 2:
+            clipping_midpoint_subdivision(x, y, p, q, bx, by, tx, ty);
+            break;
+    }
 }
 
 int main(int argc, char *argv[]){

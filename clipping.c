@@ -138,3 +138,34 @@ void clipping_cohen_sutherland(int x1, int y1, int x2, int y2,
         show_msg("\t\t\t\t\t\t\t\t\t\rClipped!");
     }
 }
+
+static void clipping_midpoint_subdivision_impl(int x1, int y1, int x2, int y2,
+        int xmin, int ymin, int xmax, int ymax){
+    int r1 = get_region_code(x1, y1, xmin, ymin, xmax, ymax);
+    int r2 = get_region_code(x2, y2, xmin, ymin, xmax, ymax);
+    if(r1 == 0 && r2 == 0){
+        draw_line_bresenham(x1, y1, x2, y2);
+    }
+    else if((r1 & r2) == 0){
+        int m1 = (x1 + x2)/2;
+        int n1 = (y1 + y2)/2;
+        // Check if the resulting point is equal to any of the given points
+        // This happens when two points are at 1 unit distance
+        if((m1 == x1 && n1 == y1) || (m1 == x2 && n1 == y2)){
+            return;
+        }
+        clipping_midpoint_subdivision_impl(x1, y1, m1, n1, xmin, ymin, xmax, ymax);
+        clipping_midpoint_subdivision_impl(m1, n1, x2, y2, xmin, ymin, xmax, ymax);
+    }
+}
+
+void clipping_midpoint_subdivision(int x1, int y1, int x2, int y2,
+        int xmin, int ymin, int xmax, int ymax){
+    if(prepare_clip(x1, y1, x2, y2, xmin, ymin, xmax, ymax)){
+        screen_clear();
+        draw_rect(xmin, ymin, xmax, ymax);
+        clipping_midpoint_subdivision_impl(x1, y1, x2, y2, xmin, ymin, xmax, ymax);
+        show_msg("\t\t\t\t\t\t\t");
+        show_msg("Clipped!");
+    }
+}
