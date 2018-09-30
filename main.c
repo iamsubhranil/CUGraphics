@@ -31,6 +31,7 @@ static void usage(const char *name){
             "\t[-n|--minor]     : Length of the minor axis          <int>\n\n"
             "Arguments for line clipping : \n"
             "\t[-o|--object]    : clip\n"
+            "\t[-a|--algo]      : [cohen|midpoint]\n"
             "\t[-x|--start]     : First endpoint of the line        <int,int>\n"
             "\t[-y|--end]       : Second endpoint of the line       <int,int>\n"
             "\t[-b|--bottom]    : Bottom left point of the window   <int,int>\n"
