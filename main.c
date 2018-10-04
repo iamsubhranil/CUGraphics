@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "bench.h"
 #include "cargparser.h"
 #include "circle_drawing.h"
 #include "clipping.h"
@@ -222,10 +223,11 @@ int main(int argc, char *argv[]){
         return 0;
     }
 
-    ArgumentList list = arg_list_create(11);
+    ArgumentList list = arg_list_create(12);
    
     arg_add(list, 'a', "algo", true);
     arg_add(list, 'b', "bottom", true);
+    arg_add(list, 'c', "bench", false);
     arg_add(list, 'g', "showgraph", false);
     arg_add(list, 'm', "major", true);
     arg_add(list, 'n', "minor", true);
@@ -237,6 +239,12 @@ int main(int argc, char *argv[]){
     arg_add(list, 'y', "end", true);
 
     arg_parse(argc, &argv[0], list);
+
+    if(arg_is_present(list, 'c')){
+        bench();
+        arg_free(list);
+        return 0;
+    }
    
     const char *objects[] = {"line", "circle", "ellipse", "clip"};
 

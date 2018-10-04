@@ -4,6 +4,10 @@
 void draw_graph();
 // Enable or disable transformations on the drawn points
 void enable_transform(int en);
+// Get numeber of rows
+int get_rows();
+// Get number of columns
+int get_columns();
 // Initialize the driver. This should be the first call to the library.
 void init_driver();
 // Illuminate a pixel in the given coordinate
