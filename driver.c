@@ -45,6 +45,14 @@ void init_driver(){
 #endif
 }
 
+int get_rows(){
+    return LINES;
+}
+
+int get_columns(){
+    return COLS;
+}
+
 void enable_transform(int t){
     do_transform = t;
 }
@@ -66,7 +74,7 @@ void draw_graph(){
 }
 
 void set_pixel(int x, int y, const char *fill){
-    if(mod_x(x) > COLS - 1 || mod_y(y) < 0 || pixels[mod_y(y)][mod_x(x)])
+    if(mod_x(x) > COLS - 1 || mod_y(y) < 0)
         return;
     pixels[mod_y(y)][mod_x(x)] = 1;
 #ifndef NO_DRAW

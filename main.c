@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "bench.h"
 #include "cargparser.h"
 #include "circle_drawing.h"
 #include "clipping.h"
@@ -11,7 +12,6 @@
 #include "line_drawing.h"
 
 static void usage(const char *name){
-    printf("\n");
     pinfo("Usage : %s <args>\n\n"
             "Arguments for line drawing : \n"
             "\t[-o|--object]    : line\n"
@@ -38,7 +38,16 @@ static void usage(const char *name){
             "\t[-t|--top]       : Top right point of the window     <int,int>\n\n"
             "To specify a coordinate, write it in the following format : \n"
             "\t<abscissa>,<ordinate>\n"
-            "Don't add any spaces in between the comma and the numbers.\n", name);
+            "Don't add any spaces in between the comma and the numbers.\n\n"
+            "Arguments for benchmarking (ignores all other arguments) : \n"
+            "\t[-c|--bench]     : [create|fill|add|sub|draw|all]\n"
+            "\tThe options perform the following benchmarks respectively :\n"
+            "\t create          : 3x3 matrix creation\n"
+            "\t fill            : 3x3 matrix fill\n"
+            "\t add             : 3x3 matrix addition\n"
+            "\t sub             : 3x3 matrix subtraction\n"
+            "\t draw            : put_pixel calls to the driver\n"
+            "\t all             : all of the above\n", name);
 }
 
 static int expect_oneof(char s, ArgumentList list, const char *err, const char *argv0, int count, const char **args){
@@ -227,16 +236,25 @@ static void draw_clip(ArgumentList list, char **argv){
     }
 }
 
+static void perform_bench(ArgumentList list, char **argv) {
+    const char *benches[] = {"create", "fill", "add", "sub", "mult", "draw", "all"};
+
+    int choice = expect_oneof('c', list, "Specify the benchmark to perform", argv[0], 7, &benches[0]);
+
+    bench((BenchType)choice);
+}
+
 int main(int argc, char *argv[]){
     if(argc < 2){
         usage(argv[0]);
         return 0;
     }
 
-    ArgumentList list = arg_list_create(11);
+    ArgumentList list = arg_list_create(12);
    
     arg_add(list, 'a', "algo", true);
     arg_add(list, 'b', "bottom", true);
+    arg_add(list, 'c', "bench", true);
     arg_add(list, 'g', "showgraph", false);
     arg_add(list, 'm', "major", true);
     arg_add(list, 'n', "minor", true);
@@ -248,6 +266,12 @@ int main(int argc, char *argv[]){
     arg_add(list, 'y', "end", true);
 
     arg_parse(argc, &argv[0], list);
+
+    if(arg_is_present(list, 'c')){
+        perform_bench(list, &argv[0]);
+        arg_free(list);
+        return 0;
+    }
    
     const char *objects[] = {"line", "circle", "ellipse", "clip"};
 
