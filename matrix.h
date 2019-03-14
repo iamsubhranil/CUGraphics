@@ -1,7 +1,7 @@
 #pragma once
 
 // Opaque matrix structure
-typedef struct Mat* Matrix;
+typedef struct Mat *Matrix;
 
 // Create a new (m x n) matrix
 Matrix mat_new(int m, int n);

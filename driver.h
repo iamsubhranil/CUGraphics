@@ -33,4 +33,4 @@ void terminate_driver();
 // Any pixel that is gone outside the viewport is permanently lost.
 void transform();
 // Start a busy wait loop until the user presses a key.
-int  wait_for_input();
+int wait_for_input();
