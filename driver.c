@@ -16,13 +16,14 @@
 static const char *pixel_fill = "\u25a0";
 #endif
 static int  pivot_x = -1, pivot_y = -1;
-static u8 **pixels       = NULL;
+static u8   *pixels       = NULL;
 static int  do_transform = 1;
 
 #define mod_y(y) (LINES - y - 1)
 #define orig_y(y) (LINES - y - 1)
 #define mod_x(x) ((x * 2) + 1)
 #define orig_x(x) ((x - 1) / 2)
+#define pxy(x, y)   (((x) * COLS) + (y))
 
 void init_driver() {
 	setlocale(LC_ALL, "");
@@ -33,11 +34,7 @@ void init_driver() {
 	pdbg("Intialized screen");
 	LINES = 200, COLS = 200;
 #endif
-	pixels = (u8 **)malloc(sizeof(u8 *) * LINES);
-	for(int i = 0; i < LINES; i++) {
-		pixels[i] = (u8 *)malloc(sizeof(u8) * COLS);
-		memset(pixels[i], 0, COLS);
-	}
+	pixels = (u8 *)malloc(sizeof(u8 *) * LINES * COLS);
 #ifndef NO_DRAW
 	clear();
 #else
@@ -76,7 +73,7 @@ void draw_graph() {
 void set_pixel(int x, int y, const char *fill) {
 	if(mod_x(x) > COLS - 1 || mod_y(y) < 0)
 		return;
-	pixels[mod_y(y)][mod_x(x)] = 1;
+	pixels[pxy(mod_y(y),mod_x(x))] = 1;
 #ifndef NO_DRAW
 	mvaddstr(mod_y(y), mod_x(x), fill);
 	refresh();
@@ -103,7 +100,7 @@ static void redraw() {
 	clear();
 	for(int i = 0; i < LINES; i++) {
 		for(int j = 0; j < COLS; j++) {
-			if(pixels[i][j])
+			if(pixels[pxy(i, j)])
 				mvaddstr(i, j, pixel_fill);
 		}
 	}
@@ -117,7 +114,7 @@ void screen_clear() {
 #ifndef NO_DRAW
 	clear();
 	for(int i = 0; i < LINES; i++) {
-		for(int j = 0; j < COLS; j++) pixels[i][j] = 0;
+		for(int j = 0; j < COLS; j++) pixels[pxy(i, j)] = 0;
 	}
 	refresh();
 #else
@@ -130,9 +127,9 @@ static void transform_mat(Matrix m, u8 use_pivot) {
 	pdbg("Transformation matrix : ");
 	mat_print(m);
 #endif
-	u8 new_pixels[LINES][COLS];
+	u8 new_pixels[LINES * COLS];
 	for(int i = 0; i < LINES; i++) {
-		for(int j = 0; j < COLS; j++) new_pixels[i][j] = 0;
+		for(int j = 0; j < COLS; j++) new_pixels[pxy(i, j)] = 0;
 	}
 	Matrix point = mat_new(3, 1);
 	Matrix pivot = mat_new(3, 1);
@@ -143,7 +140,7 @@ static void transform_mat(Matrix m, u8 use_pivot) {
 #endif
 	for(int i = 0; i < LINES; i++) {
 		for(int j = 0; j < COLS; j++) {
-			if(pixels[i][j]) {
+			if(pixels[pxy(i, j)]) {
 				mat_fill(point, j * 1.0, i * 1.0, 1.0);
 #ifdef NO_DRAW
 				pdbg("Point (P) : ");
@@ -189,7 +186,7 @@ static void transform_mat(Matrix m, u8 use_pivot) {
 				pdbg("(px, py) : (%d, %d)", px, py);
 #endif
 				if((py < LINES - 1 && py > 0) && (px < COLS - 1 && px > 0))
-					new_pixels[py][px] = 1;
+					new_pixels[pxy(py, px)] = 1;
 				mat_free(np);
 			}
 		}
@@ -198,7 +195,7 @@ static void transform_mat(Matrix m, u8 use_pivot) {
 	mat_free(pivot);
 	for(int i = 0; i < LINES; i++) {
 		for(int j = 0; j < COLS; j++) {
-			pixels[i][j] = new_pixels[i][j];
+			pixels[pxy(i, j)] = new_pixels[pxy(i, j)];
 		}
 	}
 	redraw();
@@ -373,7 +370,6 @@ void transform() {
 }
 
 void terminate_driver() {
-	for(int i = 0; i < LINES; i++) free(pixels[i]);
 	free(pixels);
 #ifndef NO_DRAW
 	endwin();
