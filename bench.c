@@ -8,8 +8,12 @@
 #include "driver.h"
 #include "matrix.h"
 
+#ifndef BENCH_DRAW_CALL_COUNT
 #define BENCH_DRAW_CALL_COUNT 500000
+#endif
+#ifndef BENCH_MAT_CREATE_COUNT
 #define BENCH_MAT_CREATE_COUNT 200000
+#endif
 #define BENCH_RESULT_COUNT BENCH_MAT_CREATE_COUNT - 1
 #define pbench(...)                       \
 	phylw("\n[Benchmark] ", __VA_ARGS__); \

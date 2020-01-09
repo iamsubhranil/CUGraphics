@@ -47,6 +47,7 @@ static void usage(const char *name) {
 	      "\t fill            : 3x3 matrix fill\n"
 	      "\t add             : 3x3 matrix addition\n"
 	      "\t sub             : 3x3 matrix subtraction\n"
+	      "\t mult            : 3x3 matrix multiplication\n"
 	      "\t draw            : put_pixel calls to the driver\n"
 	      "\t all             : all of the above\n",
 	      name);
